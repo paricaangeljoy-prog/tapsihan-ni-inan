@@ -1,0 +1,1360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tapsihan ni Inan — POS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --red:#C8202F;
+    --red-dark:#8F1420;
+    --cream:#FBF1E6;
+    --cream-2:#F5E6D3;
+    --yellow:#F6DE7A;
+    --ink:#3A2418;
+    --ink-soft:#7A5C48;
+    --line:#E6D2B8;
+    --white:#FFFFFF;
+    --green:#3A7D44;
+    --orange:#C97A2B;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Nunito',sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+  }
+  /* ===== LOGIN SCREEN ===== */
+  #loginScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-direction:column;
+    background:linear-gradient(180deg, var(--red) 0%, var(--red-dark) 100%);
+    padding:20px;
+  }
+  .login-card{
+    background:var(--cream);
+    border-radius:22px;
+    padding:32px 28px;
+    width:100%;
+    max-width:340px;
+    text-align:center;
+    box-shadow:0 12px 30px rgba(0,0,0,0.25);
+  }
+  .login-card h1{
+    font-family:'Baloo 2',cursive;
+    color:var(--red-dark);
+    font-size:26px;
+    margin:0 0 4px;
+  }
+  .login-card .sub{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin-bottom:22px;
+  }
+  .pin-display{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .pin-dot{
+    width:16px;height:16px;
+    border-radius:50%;
+    border:2px solid var(--red);
+    background:var(--white);
+  }
+  .pin-dot.filled{background:var(--red);}
+  .pin-pad{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+  }
+  .pin-key{
+    padding:16px 0;
+    border-radius:14px;
+    border:none;
+    background:var(--white);
+    font-family:'Baloo 2',cursive;
+    font-size:20px;
+    color:var(--ink);
+    cursor:pointer;
+    box-shadow:0 2px 0 var(--line);
+  }
+  .pin-key:active{transform:translateY(1px); box-shadow:none;}
+  .pin-key.wide{background:var(--cream-2); color:var(--ink-soft); font-size:14px;}
+  .login-error{
+    color:#B8483F;
+    font-size:12.5px;
+    font-weight:700;
+    min-height:18px;
+    margin-bottom:10px;
+  }
+  .login-loading{
+    color:var(--ink-soft);
+    font-size:13px;
+    margin-top:12px;
+  }
+
+  header{
+    background:var(--red);
+    background-image:linear-gradient(180deg,var(--red) 0%, var(--red-dark) 100%);
+    color:var(--yellow);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 3px 0 var(--red-dark);
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  header h1{
+    font-family:'Baloo 2',cursive;
+    font-size:26px;
+    margin:0;
+    letter-spacing:0.5px;
+    text-shadow:2px 2px 0 var(--red-dark);
+  }
+  header .tag{
+    font-size:12px;
+    color:var(--cream);
+    opacity:0.85;
+    font-weight:600;
+    margin-top:2px;
+  }
+  .tabs{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+  }
+  .tab-btn{
+    background:rgba(255,255,255,0.12);
+    border:2px solid transparent;
+    color:var(--cream);
+    font-family:'Baloo 2',cursive;
+    font-size:14px;
+    padding:8px 16px;
+    border-radius:10px;
+    cursor:pointer;
+    letter-spacing:0.3px;
+  }
+  .tab-btn:hover{background:rgba(255,255,255,0.2);}
+  .tab-btn.active{
+    background:var(--yellow);
+    color:var(--red-dark);
+    border-color:var(--yellow);
+  }
+  header .order-info{
+    text-align:right;
+    color:var(--cream);
+    font-size:13px;
+    font-weight:700;
+  }
+  .data-buttons{
+    display:flex;
+    gap:6px;
+    align-items:center;
+  }
+  .data-btn{
+    background:rgba(255,255,255,0.12);
+    border:2px solid rgba(255,255,255,0.3);
+    color:var(--cream);
+    font-family:'Nunito',sans-serif;
+    font-size:12px;
+    font-weight:800;
+    padding:7px 12px;
+    border-radius:9px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .data-btn:hover{background:rgba(255,255,255,0.22);}
+  .sync-dot{
+    width:9px;height:9px;
+    border-radius:50%;
+    background:var(--green);
+    display:inline-block;
+    margin-right:5px;
+    box-shadow:0 0 0 0 rgba(58,125,68,0.6);
+    animation:pulse 2s infinite;
+  }
+  .sync-dot.offline{background:#B8483F; animation:none;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(58,125,68,0.5);}
+    70%{box-shadow:0 0 0 6px rgba(58,125,68,0);}
+    100%{box-shadow:0 0 0 0 rgba(58,125,68,0);}
+  }
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:1fr 380px;
+    gap:0;
+    min-height:calc(100vh - 74px);
+  }
+  @media (max-width: 860px){
+    .layout{grid-template-columns:1fr;}
+  }
+
+  .menu-panel{padding:20px 24px 100px;}
+  .category{
+    font-family:'Baloo 2',cursive;
+    color:var(--red-dark);
+    font-size:20px;
+    margin:22px 0 10px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .category:first-child{margin-top:0;}
+  .category::after{content:"";flex:1;border-bottom:3px dotted var(--line);}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+    gap:10px;
+  }
+  .item-btn{
+    background:var(--white);
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:12px 10px;
+    text-align:left;
+    cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease, border-color .08s ease;
+    font-family:'Nunito',sans-serif;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    position:relative;
+  }
+  .item-btn:hover{border-color:var(--red); transform:translateY(-2px); box-shadow:0 4px 0 var(--red);}
+  .item-btn:active{transform:translateY(0); box-shadow:none;}
+  .item-btn .name{font-weight:800; font-size:14.5px; color:var(--ink); line-height:1.2;}
+  .item-btn .price{font-weight:700; color:var(--red-dark); font-size:14px;}
+  .item-btn .stock-tag{
+    position:absolute; top:-8px; right:8px;
+    font-size:10px; font-weight:800; padding:2px 8px;
+    border-radius:8px; border:1px solid;
+  }
+  .item-btn .stock-tag.low{background:var(--yellow); color:var(--red-dark); border-color:var(--red-dark);}
+  .item-btn .stock-tag.out{background:#B8483F; color:var(--white); border-color:#8F1420;}
+  .item-btn.out-of-stock{opacity:0.5; cursor:not-allowed; background:var(--cream-2);}
+  .item-btn.out-of-stock:hover{transform:none; box-shadow:none; border-color:var(--line);}
+
+  .cart-panel{
+    background:var(--white);
+    border-left:3px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    position:sticky;
+    top:0;
+    height:calc(100vh - 74px);
+  }
+  .cart-header{padding:16px 18px 10px; border-bottom:2px dashed var(--line); display:flex; justify-content:space-between; align-items:center;}
+  .cart-header h2{font-family:'Baloo 2',cursive; margin:0; color:var(--red-dark); font-size:20px;}
+  .cashier-badge{font-size:11px; font-weight:800; color:var(--ink-soft); background:var(--cream-2); padding:4px 10px; border-radius:8px;}
+  .cart-items{flex:1; overflow-y:auto; padding:8px 18px;}
+  .cart-empty{text-align:center; color:var(--ink-soft); padding:40px 10px; font-size:14px;}
+  .cart-row{display:flex; align-items:center; gap:8px; padding:10px 0; border-bottom:1px solid var(--cream-2);}
+  .cart-row .info{flex:1; min-width:0;}
+  .cart-row .info .n{font-weight:700; font-size:14px; color:var(--ink);}
+  .cart-row .info .p{font-size:12px; color:var(--ink-soft);}
+  .qty-ctrl{display:flex; align-items:center; gap:6px;}
+  .qty-ctrl button{width:24px; height:24px; border-radius:6px; border:1px solid var(--line); background:var(--cream-2); color:var(--red-dark); font-weight:800; cursor:pointer; font-size:14px; line-height:1;}
+  .qty-ctrl button:hover{background:var(--yellow);}
+  .qty-ctrl .q{min-width:18px; text-align:center; font-weight:800; font-size:14px;}
+  .line-total{width:64px; text-align:right; font-weight:800; font-size:13.5px; color:var(--ink);}
+  .remove-btn{background:none; border:none; color:#B8483F; cursor:pointer; font-size:16px; padding:0 2px;}
+
+  .cart-summary{padding:14px 18px; border-top:2px dashed var(--line); background:var(--cream);}
+  .sum-row{display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px; color:var(--ink-soft);}
+  .sum-row.total{font-size:19px; font-weight:800; color:var(--red-dark); margin-top:8px; padding-top:8px; border-top:1px solid var(--line);}
+  .delivery-row{margin:8px 0; padding:8px 0; border-top:1px solid var(--cream-2); border-bottom:1px solid var(--cream-2);}
+  .delivery-toggle{display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:700; color:var(--ink); cursor:pointer;}
+  .delivery-toggle input{width:16px; height:16px; accent-color:var(--red);}
+  .delivery-input-wrap{display:flex; align-items:center; gap:8px; margin-top:8px;}
+  .delivery-input-wrap label{font-size:12.5px; font-weight:700; color:var(--ink-soft); white-space:nowrap;}
+  .delivery-input-wrap input{flex:1; padding:7px 10px; border-radius:8px; border:1.5px solid var(--line); font-size:13.5px; font-weight:700; font-family:'Nunito',sans-serif;}
+  .payment-row{margin:8px 0;}
+  .payment-row > label{font-size:12.5px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.4px; display:block; margin-bottom:6px;}
+  .payment-options{display:grid; grid-template-columns:1fr 1fr; gap:6px;}
+  .pay-btn{padding:8px 6px; border-radius:9px; border:2px solid var(--line); background:var(--white); font-size:12.5px; font-weight:700; cursor:pointer; color:var(--ink); font-family:'Nunito',sans-serif;}
+  .pay-btn:hover{border-color:var(--red);}
+  .pay-btn.active{background:var(--red); border-color:var(--red); color:var(--white);}
+  .cash-row{display:flex; gap:8px; align-items:center; margin:10px 0 4px;}
+  .cash-row label{font-size:13px; font-weight:700; color:var(--ink); white-space:nowrap;}
+  .cash-row input{flex:1; padding:8px 10px; border-radius:8px; border:1.5px solid var(--line); font-size:14px; font-weight:700; font-family:'Nunito',sans-serif;}
+  .change-row{display:flex; justify-content:space-between; font-size:14px; font-weight:800; margin-top:6px;}
+  .change-row.negative{color:#B8483F;}
+  .change-row.positive{color:var(--green);}
+  .cart-actions{display:flex; gap:8px; padding:14px 18px;}
+  .btn{flex:1; padding:12px 10px; border-radius:12px; border:none; font-weight:800; font-size:14px; cursor:pointer; font-family:'Baloo 2',cursive; letter-spacing:0.3px;}
+  .btn-clear{background:var(--cream-2); color:var(--ink-soft); flex:0.7;}
+  .btn-clear:hover{background:var(--line);}
+  .btn-checkout{background:var(--red); color:var(--white); box-shadow:0 3px 0 var(--red-dark);}
+  .btn-checkout:hover{background:var(--red-dark);}
+  .btn-checkout:disabled{background:#CBBBAE; box-shadow:none; cursor:not-allowed;}
+  .btn-logout{background:var(--cream-2); color:var(--ink-soft); flex:0.5;}
+  .btn-logout:hover{background:var(--line);}
+
+  .page{padding:24px 28px 60px; max-width:1100px; margin:0 auto;}
+  .page-head{display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:12px; margin-bottom:18px;}
+  .page-head h2{font-family:'Baloo 2',cursive; color:var(--red-dark); font-size:24px; margin:0;}
+  .page-head p{margin:2px 0 0; color:var(--ink-soft); font-size:13px;}
+  .toolbar{display:flex; gap:8px; flex-wrap:wrap;}
+  .btn-sm{padding:9px 16px; border-radius:10px; border:none; font-weight:800; font-size:13px; cursor:pointer; font-family:'Baloo 2',cursive; letter-spacing:0.3px;}
+  .btn-primary{background:var(--red); color:var(--white);}
+  .btn-primary:hover{background:var(--red-dark);}
+  .btn-outline{background:var(--white); color:var(--red-dark); border:2px solid var(--red);}
+  .btn-outline:hover{background:var(--cream-2);}
+  .btn-ghost{background:var(--cream-2); color:var(--ink-soft);}
+  .btn-ghost:hover{background:var(--line);}
+
+  table{width:100%; border-collapse:collapse; background:var(--white); border-radius:14px; overflow:hidden; box-shadow:0 1px 0 var(--line);}
+  thead th{background:var(--cream-2); color:var(--red-dark); font-family:'Baloo 2',cursive; font-weight:700; text-align:left; padding:10px 14px; font-size:13px; border-bottom:2px solid var(--line);}
+  tbody td{padding:10px 14px; font-size:13.5px; border-bottom:1px solid var(--cream-2);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr.low-stock{background:#FBEAEA;}
+  .stock-badge{font-size:11px; font-weight:800; padding:3px 9px; border-radius:8px; display:inline-block;}
+  .stock-badge.ok{background:#E4F3E6; color:var(--green);}
+  .stock-badge.low{background:#FBE0DE; color:#B8483F;}
+  .inv-qty-ctrl{display:inline-flex; align-items:center; gap:6px;}
+  .inv-qty-ctrl button{width:24px; height:24px; border-radius:6px; border:1px solid var(--line); background:var(--cream-2); color:var(--red-dark); font-weight:800; cursor:pointer; font-size:14px; line-height:1;}
+  .inv-qty-ctrl button:hover{background:var(--yellow);}
+  .icon-btn{background:none; border:none; cursor:pointer; font-size:15px; color:var(--ink-soft); padding:2px 6px;}
+  .icon-btn:hover{color:var(--red);}
+  .empty-state{text-align:center; padding:50px 20px; color:var(--ink-soft); font-size:14px; background:var(--white); border-radius:14px;}
+  .add-form{background:var(--white); border:2px dashed var(--line); border-radius:14px; padding:16px; margin-bottom:16px; display:none; gap:10px; flex-wrap:wrap; align-items:flex-end;}
+  .add-form.show{display:flex;}
+  .field{display:flex; flex-direction:column; gap:4px;}
+  .field label{font-size:11.5px; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.4px;}
+  .field input, .field select{padding:8px 10px; border-radius:8px; border:1.5px solid var(--line); font-size:13.5px; font-family:'Nunito',sans-serif; font-weight:600;}
+
+  .modal-overlay{position:fixed; inset:0; background:rgba(58,36,24,0.55); display:none; align-items:center; justify-content:center; z-index:50; padding:20px;}
+  .modal-overlay.show{display:flex;}
+  .receipt{background:var(--white); width:320px; max-height:90vh; overflow-y:auto; padding:22px 20px; border-radius:6px; font-family:'Nunito',monospace; box-shadow:0 10px 30px rgba(0,0,0,0.3);}
+  .receipt h3{font-family:'Baloo 2',cursive; text-align:center; color:var(--red-dark); margin:0 0 2px; font-size:20px;}
+  .receipt .sub{text-align:center; font-size:11px; color:var(--ink-soft); margin-bottom:12px;}
+  .receipt hr{border:none; border-top:1px dashed var(--line); margin:10px 0;}
+  .receipt .r-row{display:flex; justify-content:space-between; font-size:13px; margin:4px 0;}
+  .receipt .r-total{font-weight:800; font-size:15px;}
+  .receipt .thanks{text-align:center; font-size:12px; margin-top:14px; color:var(--ink-soft);}
+  .modal-btns{display:flex; gap:8px; margin-top:16px;}
+  .modal-btns button{flex:1; padding:10px; border-radius:10px; border:none; font-weight:800; cursor:pointer; font-family:'Baloo 2',cursive;}
+  .btn-print{background:var(--yellow); color:var(--red-dark);}
+  .btn-newsale{background:var(--red); color:var(--white);}
+
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--ink); color:var(--cream); padding:10px 20px; border-radius:10px; font-size:13px; font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s ease, transform .2s ease; z-index:100;}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+  #appScreen{display:none;}
+
+  @media print{
+    body *{visibility:hidden;}
+    .receipt, .receipt *{visibility:visible;}
+    .receipt{position:absolute; top:0; left:0; box-shadow:none;}
+    .modal-btns{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN SCREEN ===== -->
+<div id="loginScreen">
+  <div class="login-card">
+    <h1>Tapsihan ni Inan</h1>
+    <div class="sub">Enter your staff PIN</div>
+    <div class="pin-display" id="pinDisplay">
+      <span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span><span class="pin-dot"></span>
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <div class="pin-pad">
+      <button class="pin-key" data-k="1">1</button>
+      <button class="pin-key" data-k="2">2</button>
+      <button class="pin-key" data-k="3">3</button>
+      <button class="pin-key" data-k="4">4</button>
+      <button class="pin-key" data-k="5">5</button>
+      <button class="pin-key" data-k="6">6</button>
+      <button class="pin-key" data-k="7">7</button>
+      <button class="pin-key" data-k="8">8</button>
+      <button class="pin-key" data-k="9">9</button>
+      <button class="pin-key wide" id="pinClear">Clear</button>
+      <button class="pin-key" data-k="0">0</button>
+      <button class="pin-key wide" id="pinBack">⌫</button>
+    </div>
+    <div class="login-loading" id="loginLoading" style="display:none;">Checking...</div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="appScreen">
+<header>
+  <div>
+    <h1>Tapsihan ni Inan</h1>
+    <div class="tag"><span class="sync-dot" id="syncDot"></span><span id="syncLabel">Synced</span></div>
+  </div>
+  <div class="tabs" id="tabsBar">
+    <button class="tab-btn active" data-view="pos">🧾 POS</button>
+  </div>
+  <div class="data-buttons" id="ownerButtons" style="display:none;">
+    <button class="data-btn" id="exportExcelBtn">⬇ Export Excel</button>
+  </div>
+  <div class="order-info">
+    <span id="cashierName"></span><br>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<!-- ===== POS VIEW ===== -->
+<div class="view active" id="view-pos">
+  <div class="layout">
+    <div class="menu-panel" id="menuPanel"></div>
+    <div class="cart-panel">
+      <div class="cart-header">
+        <h2>Current Order</h2>
+        <span class="cashier-badge" id="cashierBadge"></span>
+      </div>
+      <div class="cart-items" id="cartItems">
+        <div class="cart-empty">Tap items on the left to add them here.</div>
+      </div>
+      <div class="cart-summary">
+        <div class="sum-row"><span>Items</span><span id="itemCount">0</span></div>
+        <div class="sum-row"><span>Subtotal</span><span id="subtotalAmt">₱0.00</span></div>
+        <div class="delivery-row">
+          <label class="delivery-toggle">
+            <input type="checkbox" id="deliveryToggle">
+            <span>Delivery order</span>
+          </label>
+          <div class="delivery-input-wrap" id="deliveryInputWrap" style="display:none;">
+            <label for="deliveryInput">Delivery charge (₱)</label>
+            <input type="number" id="deliveryInput" placeholder="varies" min="0" step="1">
+          </div>
+        </div>
+        <div class="sum-row total"><span>Total</span><span id="totalAmt">₱0.00</span></div>
+        <div class="payment-row">
+          <label>Payment method</label>
+          <div class="payment-options" id="paymentOptions">
+            <button type="button" class="pay-btn active" data-method="Cash">💵 Cash</button>
+            <button type="button" class="pay-btn" data-method="GCash">📱 GCash</button>
+            <button type="button" class="pay-btn" data-method="Maya">📱 Maya</button>
+            <button type="button" class="pay-btn" data-method="Bank Transfer">🏦 Bank</button>
+          </div>
+        </div>
+        <div class="cash-row">
+          <label for="cashInput" id="cashLabel">Cash received</label>
+          <input type="number" id="cashInput" placeholder="0.00" min="0" step="1">
+        </div>
+        <div class="change-row" id="changeRow"><span>Change</span><span>₱0.00</span></div>
+      </div>
+      <div class="cart-actions">
+        <button class="btn btn-logout" id="logoutBtn">Log out</button>
+        <button class="btn btn-clear" id="clearBtn">Clear</button>
+        <button class="btn btn-checkout" id="checkoutBtn" disabled>Checkout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INVENTORY VIEW (owner only) ===== -->
+<div class="view" id="view-inventory">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h2>Inventory</h2>
+        <p>Raw stock on hand — synced live with your business partner and staff.</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn-sm btn-outline" id="toggleAddInv">+ Add stock item</button>
+      </div>
+    </div>
+    <div class="add-form" id="addInvForm">
+      <div class="field"><label>Item name</label><input type="text" id="invName" placeholder="e.g. Rice"></div>
+      <div class="field"><label>Unit</label><input type="text" id="invUnit" placeholder="kg, pcs..."></div>
+      <div class="field"><label>Starting qty</label><input type="number" id="invQty" placeholder="0" min="0" step="0.1"></div>
+      <div class="field"><label>Reorder level</label><input type="number" id="invReorder" placeholder="0" min="0" step="0.1"></div>
+      <div class="field"><label>Cost per unit (₱)</label><input type="number" id="invCost" placeholder="0.00" min="0" step="0.01"></div>
+      <button class="btn-sm btn-primary" id="saveInvBtn">Save item</button>
+      <button class="btn-sm btn-ghost" id="cancelInvBtn">Cancel</button>
+    </div>
+    <div id="inventoryTableWrap"></div>
+  </div>
+</div>
+
+<!-- ===== ITEM STOCK VIEW (owner only) ===== -->
+<div class="view" id="view-itemstock">
+  <div class="page">
+    <div class="page-head">
+      <div>
+        <h2>Item Stock</h2>
+        <p>How many servings of each dish are left today. Runs low or out and it flags itself on the POS screen instantly for whoever's cashiering.</p>
+      </div>
+      <div class="toolbar">
+        <button class="btn-sm btn-outline" id="restockParBtn">↻ Restock all to par</button>
+      </div>
+    </div>
+    <div id="itemStockTableWrap"></div>
+  </div>
+</div>
+
+<!-- ===== FOOD COST VIEW (owner only) ===== -->
+<div class="view" id="view-foodcost">
+  <div class="page">
+    <div class="page-head">
+      <div><h2>Food Cost</h2><p>Recipes built from Inventory ingredients — cost and margin per dish, automatic.</p></div>
+      <div class="toolbar">
+        <button class="btn-sm btn-outline" id="toggleAddMenuItem">+ Add menu item</button>
+      </div>
+    </div>
+    <div class="add-form" id="addMenuItemForm">
+      <div class="field"><label>Dish name</label><input type="text" id="miName" placeholder="e.g. Sizzling Sisig"></div>
+      <div class="field">
+        <label>Category</label>
+        <select id="miCategorySelect"></select>
+      </div>
+      <div class="field" id="miNewCategoryWrap" style="display:none;">
+        <label>New category name</label>
+        <input type="text" id="miNewCategory" placeholder="e.g. Seasonal">
+      </div>
+      <div class="field"><label>Price (₱)</label><input type="number" id="miPrice" placeholder="0.00" min="0" step="1"></div>
+      <button class="btn-sm btn-primary" id="saveMenuItemBtn">Save dish</button>
+      <button class="btn-sm btn-ghost" id="cancelMenuItemBtn">Cancel</button>
+    </div>
+    <div id="foodcostTableWrap"></div>
+    <div class="add-form show" id="recipeEditor" style="display:none; flex-direction:column; align-items:stretch; margin-top:16px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+        <strong id="recipeEditorTitle" style="font-family:'Baloo 2',cursive; color:var(--red-dark); font-size:16px;"></strong>
+        <button class="btn-sm btn-ghost" id="closeRecipeEditor">Close</button>
+      </div>
+      <div id="recipeLines" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+      <div style="display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap;">
+        <div class="field"><label>Ingredient</label><select id="recipeIngredientSelect"></select></div>
+        <div class="field"><label>Qty per serving</label><input type="number" id="recipeQtyInput" placeholder="0" min="0" step="0.01" style="width:100px;"></div>
+        <button class="btn-sm btn-primary" id="addRecipeLineBtn">+ Add ingredient</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SALES LOG VIEW (owner only) ===== -->
+<div class="view" id="view-sales">
+  <div class="page">
+    <div class="page-head">
+      <div><h2>Sales Log</h2><p>Every sale, from every cashier, synced live — nothing to export daily unless you want a copy.</p></div>
+    </div>
+    <div id="salesTableWrap"></div>
+  </div>
+</div>
+
+<!-- ===== STAFF VIEW (owner only) ===== -->
+<div class="view" id="view-staff">
+  <div class="page">
+    <div class="page-head">
+      <div><h2>Staff PINs</h2><p>Manage who can log in and what they can see.</p></div>
+      <div class="toolbar">
+        <button class="btn-sm btn-outline" id="toggleAddStaff">+ Add staff</button>
+      </div>
+    </div>
+    <div class="add-form" id="addStaffForm">
+      <div class="field"><label>Name</label><input type="text" id="staffName" placeholder="e.g. Maria"></div>
+      <div class="field"><label>PIN (4 digits)</label><input type="text" id="staffPin" maxlength="4" placeholder="0000"></div>
+      <div class="field"><label>Role</label>
+        <select id="staffRole"><option value="cashier">Cashier (POS only)</option><option value="owner">Owner (full access)</option></select>
+      </div>
+      <button class="btn-sm btn-primary" id="saveStaffBtn">Save</button>
+      <button class="btn-sm btn-ghost" id="cancelStaffBtn">Cancel</button>
+    </div>
+    <div id="staffTableWrap"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="receiptOverlay"><div class="receipt" id="receiptContent"></div></div>
+<div class="toast" id="toast"></div>
+</div><!-- /appScreen -->
+
+<script>
+/* ============================================================
+   SUPABASE CONNECTION
+   ============================================================ */
+const SUPABASE_URL = 'https://oftdwsbrgmmaxlzcegoq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mdGR3c2JyZ21tYXhsemNlZ29xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3NDM2NjksImV4cCI6MjEwMDMxOTY2OX0.CfL-a_JbcuU9T0NZMn-USndouxR2OMvHBJkopmLg8b0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* ============================================================
+   STATE
+   ============================================================ */
+let currentUser = null; // { id, name, role }
+let pinBuffer = '';
+let menuItems = [];      // [{id,name,category,price,active}]
+let inventory = [];      // [{id,name,unit,qty,reorder_level,cost_per_unit}]
+let itemStock = {};      // menu_item_id -> {id, qty_left, par, threshold}
+let recipeLines = {};    // menu_item_id -> [{id, inventory_id, qty_per_serving}]
+let salesLog = [];       // rows from sales table
+let staffList = [];      // rows from staff table
+let cart = {};           // menu_item_id -> {id, name, price, qty}
+let isDelivery = false;
+let deliveryCharge = 0;
+let paymentMethod = 'Cash';
+let orderCounter = 1;
+let editingDish = null;
+
+function fmt(n){
+  return "₱" + (n||0).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(showToast._timer);
+  showToast._timer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function setSyncStatus(ok){
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if(ok){ dot.classList.remove('offline'); label.textContent = 'Synced'; }
+  else { dot.classList.add('offline'); label.textContent = 'Connection issue'; }
+}
+
+/* ============================================================
+   LOGIN (PIN pad)
+   ============================================================ */
+function updatePinDisplay(){
+  document.querySelectorAll('.pin-dot').forEach((dot, i) => {
+    dot.classList.toggle('filled', i < pinBuffer.length);
+  });
+}
+document.querySelectorAll('.pin-key[data-k]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if(pinBuffer.length >= 4) return;
+    pinBuffer += btn.dataset.k;
+    updatePinDisplay();
+    document.getElementById('loginError').textContent = '';
+    if(pinBuffer.length === 4) attemptLogin();
+  });
+});
+document.getElementById('pinClear').addEventListener('click', () => {
+  pinBuffer = '';
+  updatePinDisplay();
+  document.getElementById('loginError').textContent = '';
+});
+document.getElementById('pinBack').addEventListener('click', () => {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDisplay();
+});
+
+async function attemptLogin(){
+  document.getElementById('loginLoading').style.display = 'block';
+  const { data, error } = await sb.from('staff').select('*').eq('pin', pinBuffer).maybeSingle();
+  document.getElementById('loginLoading').style.display = 'none';
+  if(error || !data){
+    document.getElementById('loginError').textContent = 'Incorrect PIN — try again';
+    pinBuffer = '';
+    updatePinDisplay();
+    return;
+  }
+  currentUser = data;
+  pinBuffer = '';
+  updatePinDisplay();
+  enterApp();
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  currentUser = null;
+  cart = {};
+  document.getElementById('appScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+});
+
+async function enterApp(){
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appScreen').style.display = 'block';
+  document.getElementById('cashierName').textContent = currentUser.name;
+  document.getElementById('cashierBadge').textContent = currentUser.name + ' · ' + currentUser.role;
+
+  const isOwner = currentUser.role === 'owner';
+  document.getElementById('ownerButtons').style.display = isOwner ? 'flex' : 'none';
+  const tabsBar = document.getElementById('tabsBar');
+  tabsBar.innerHTML = '<button class="tab-btn active" data-view="pos">🧾 POS</button>';
+  if(isOwner){
+    tabsBar.innerHTML += `
+      <button class="tab-btn" data-view="inventory">📦 Inventory</button>
+      <button class="tab-btn" data-view="itemstock">🍽️ Item Stock</button>
+      <button class="tab-btn" data-view="foodcost">🧮 Food Cost</button>
+      <button class="tab-btn" data-view="sales">📊 Sales Log</button>
+      <button class="tab-btn" data-view="staff">👥 Staff</button>
+    `;
+    bindTabButtons();
+  } else {
+    bindTabButtons();
+  }
+
+  await loadAllData();
+  renderMenu();
+  renderCart();
+}
+
+function bindTabButtons(){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('view-' + btn.dataset.view).classList.add('active');
+      if(btn.dataset.view === 'inventory') renderInventory();
+      if(btn.dataset.view === 'itemstock') renderItemStock();
+      if(btn.dataset.view === 'foodcost') renderFoodCost();
+      if(btn.dataset.view === 'sales') renderSales();
+      if(btn.dataset.view === 'staff') renderStaff();
+    });
+  });
+}
+
+/* ============================================================
+   DATA LOADING
+   ============================================================ */
+async function loadAllData(){
+  try{
+    const [mi, inv, is, rl, sl, st] = await Promise.all([
+      sb.from('menu_items').select('*').eq('active', true).order('id'),
+      sb.from('inventory').select('*').order('id'),
+      sb.from('item_stock').select('*'),
+      sb.from('recipe_lines').select('*'),
+      sb.from('sales').select('*').order('sold_at', { ascending:false }),
+      sb.from('staff').select('*').order('id')
+    ]);
+    menuItems = mi.data || [];
+    inventory = inv.data || [];
+    itemStock = {};
+    (is.data || []).forEach(row => itemStock[row.menu_item_id] = row);
+    recipeLines = {};
+    (rl.data || []).forEach(row => {
+      if(!recipeLines[row.menu_item_id]) recipeLines[row.menu_item_id] = [];
+      recipeLines[row.menu_item_id].push(row);
+    });
+    salesLog = sl.data || [];
+    staffList = st.data || [];
+    orderCounter = (salesLog[0]?.order_num || 0) + 1;
+    setSyncStatus(true);
+  } catch(err){
+    setSyncStatus(false);
+    showToast('Could not reach the database — check your internet connection');
+  }
+}
+
+/* live sync: refresh item_stock and inventory when changed from another device */
+sb.channel('public:item_stock')
+  .on('postgres_changes', { event:'*', schema:'public', table:'item_stock' }, async () => {
+    const { data } = await sb.from('item_stock').select('*');
+    itemStock = {};
+    (data || []).forEach(row => itemStock[row.menu_item_id] = row);
+    if(currentUser){ renderMenu(); if(document.getElementById('view-itemstock').classList.contains('active')) renderItemStock(); }
+  }).subscribe();
+
+sb.channel('public:inventory')
+  .on('postgres_changes', { event:'*', schema:'public', table:'inventory' }, async () => {
+    const { data } = await sb.from('inventory').select('*').order('id');
+    inventory = data || [];
+    if(currentUser && document.getElementById('view-inventory').classList.contains('active')) renderInventory();
+  }).subscribe();
+
+sb.channel('public:sales')
+  .on('postgres_changes', { event:'INSERT', schema:'public', table:'sales' }, async () => {
+    const { data } = await sb.from('sales').select('*').order('sold_at', { ascending:false });
+    salesLog = data || [];
+    if(currentUser && document.getElementById('view-sales').classList.contains('active')) renderSales();
+  }).subscribe();
+
+/* ============================================================
+   MENU (POS)
+   ============================================================ */
+function renderMenu(){
+  const panel = document.getElementById('menuPanel');
+  panel.innerHTML = '';
+  const categories = [...new Set(menuItems.map(m => m.category))];
+  categories.forEach(cat => {
+    const catEl = document.createElement('div');
+    catEl.className = 'category';
+    catEl.textContent = cat;
+    panel.appendChild(catEl);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    menuItems.filter(m => m.category === cat).forEach(item => {
+      const btn = document.createElement('button');
+      const stock = itemStock[item.id];
+      let tagHTML = '';
+      let isOut = false;
+      if(stock){
+        if(stock.qty_left <= 0){ tagHTML = '<span class="stock-tag out">OUT</span>'; isOut = true; }
+        else if(stock.qty_left <= stock.threshold){ tagHTML = `<span class="stock-tag low">${stock.qty_left} left</span>`; }
+      }
+      btn.className = 'item-btn' + (isOut ? ' out-of-stock' : '');
+      btn.innerHTML = `${tagHTML}<span class="name">${item.name}</span><span class="price">${fmt(item.price)}</span>`;
+      if(isOut){ btn.disabled = true; }
+      else{ btn.addEventListener('click', () => addToCart(item)); }
+      grid.appendChild(btn);
+    });
+    panel.appendChild(grid);
+  });
+}
+
+function addToCart(item){
+  const stock = itemStock[item.id];
+  const currentQty = cart[item.id] ? cart[item.id].qty : 0;
+  if(stock && currentQty + 1 > stock.qty_left){
+    showToast(`Only ${stock.qty_left} ${item.name} left today`);
+    return;
+  }
+  if(cart[item.id]){ cart[item.id].qty += 1; }
+  else{ cart[item.id] = { id:item.id, name:item.name, price:item.price, qty:1 }; }
+  renderCart();
+}
+function changeQty(id, delta){
+  if(!cart[id]) return;
+  const stock = itemStock[id];
+  if(delta > 0 && stock && cart[id].qty + delta > stock.qty_left){
+    showToast(`Only ${stock.qty_left} ${cart[id].name} left today`);
+    return;
+  }
+  cart[id].qty += delta;
+  if(cart[id].qty <= 0) delete cart[id];
+  renderCart();
+}
+function removeItem(id){ delete cart[id]; renderCart(); }
+function getSubtotal(){ return Object.values(cart).reduce((s,it)=>s+it.price*it.qty,0); }
+function getTotal(){ return getSubtotal() + (isDelivery ? deliveryCharge : 0); }
+function getItemCount(){ return Object.values(cart).reduce((s,it)=>s+it.qty,0); }
+
+function renderCart(){
+  const container = document.getElementById('cartItems');
+  const entries = Object.values(cart);
+  if(entries.length === 0){
+    container.innerHTML = '<div class="cart-empty">Tap items on the left to add them here.</div>';
+  } else {
+    container.innerHTML = '';
+    entries.forEach(it => {
+      const row = document.createElement('div');
+      row.className = 'cart-row';
+      row.innerHTML = `
+        <div class="info"><div class="n">${it.name}</div><div class="p">${fmt(it.price)} each</div></div>
+        <div class="qty-ctrl"><button class="minus">−</button><span class="q">${it.qty}</span><button class="plus">+</button></div>
+        <div class="line-total">${fmt(it.price * it.qty)}</div>
+        <button class="remove-btn">✕</button>
+      `;
+      row.querySelector('.minus').addEventListener('click', () => changeQty(it.id, -1));
+      row.querySelector('.plus').addEventListener('click', () => changeQty(it.id, 1));
+      row.querySelector('.remove-btn').addEventListener('click', () => removeItem(it.id));
+      container.appendChild(row);
+    });
+  }
+  document.getElementById('itemCount').textContent = getItemCount();
+  document.getElementById('subtotalAmt').textContent = fmt(getSubtotal());
+  document.getElementById('totalAmt').textContent = fmt(getTotal());
+  document.getElementById('checkoutBtn').disabled = entries.length === 0;
+  updateChange();
+}
+function updateChange(){
+  const total = getTotal();
+  const cash = parseFloat(document.getElementById('cashInput').value) || 0;
+  const change = cash - total;
+  const row = document.getElementById('changeRow');
+  row.classList.remove('positive','negative');
+  if(cash === 0){ row.innerHTML = `<span>Change</span><span>${fmt(0)}</span>`; }
+  else if(change < 0){ row.classList.add('negative'); row.innerHTML = `<span>Short by</span><span>${fmt(Math.abs(change))}</span>`; }
+  else{ row.classList.add('positive'); row.innerHTML = `<span>Change</span><span>${fmt(change)}</span>`; }
+}
+document.getElementById('cashInput').addEventListener('input', updateChange);
+document.getElementById('deliveryToggle').addEventListener('change', (e) => {
+  isDelivery = e.target.checked;
+  document.getElementById('deliveryInputWrap').style.display = isDelivery ? 'flex' : 'none';
+  if(!isDelivery){ deliveryCharge = 0; document.getElementById('deliveryInput').value = ''; }
+  renderCart();
+});
+document.getElementById('deliveryInput').addEventListener('input', (e) => {
+  deliveryCharge = parseFloat(e.target.value) || 0;
+  renderCart();
+});
+document.querySelectorAll('.pay-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    paymentMethod = btn.dataset.method;
+    document.getElementById('cashLabel').textContent = paymentMethod === 'Cash' ? 'Cash received' : `Amount received (${paymentMethod})`;
+    updateChange();
+  });
+});
+
+function resetCartUI(){
+  cart = {};
+  document.getElementById('cashInput').value = '';
+  isDelivery = false; deliveryCharge = 0;
+  document.getElementById('deliveryToggle').checked = false;
+  document.getElementById('deliveryInputWrap').style.display = 'none';
+  document.getElementById('deliveryInput').value = '';
+  paymentMethod = 'Cash';
+  document.querySelectorAll('.pay-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.pay-btn[data-method="Cash"]').classList.add('active');
+  document.getElementById('cashLabel').textContent = 'Cash received';
+  renderCart();
+}
+document.getElementById('clearBtn').addEventListener('click', resetCartUI);
+
+document.getElementById('checkoutBtn').addEventListener('click', async () => {
+  const subtotal = getSubtotal();
+  const delivery = isDelivery ? deliveryCharge : 0;
+  const total = getTotal();
+  const cash = parseFloat(document.getElementById('cashInput').value) || 0;
+  const change = cash - total;
+  const items = Object.values(cart);
+  const orderNum = orderCounter;
+
+  const { error } = await sb.from('sales').insert({
+    order_num: orderNum,
+    items: items.map(it => ({ name: it.name, qty: it.qty, price: it.price })),
+    subtotal, delivery_charge: delivery, total,
+    payment_method: paymentMethod,
+    cash_received: cash,
+    change_given: Math.max(change,0),
+    cashier_name: currentUser.name
+  });
+  if(error){ showToast('Could not save the sale — check connection and try again'); return; }
+  orderCounter += 1;
+
+  // deduct ingredients (inventory) per recipe
+  let shortages = [];
+  for(const it of items){
+    const lines = recipeLines[it.id] || [];
+    for(const line of lines){
+      const invItem = inventory.find(x => x.id === line.inventory_id);
+      if(!invItem) continue;
+      const used = line.qty_per_serving * it.qty;
+      const newQty = Math.max(0, +(invItem.qty - used).toFixed(2));
+      if(invItem.qty - used < 0) shortages.push(invItem.name);
+      invItem.qty = newQty;
+      await sb.from('inventory').update({ qty: newQty }).eq('id', invItem.id);
+    }
+  }
+  // deduct item stock for tracked dishes
+  for(const it of items){
+    const stock = itemStock[it.id];
+    if(!stock) continue;
+    const newQty = Math.max(0, stock.qty_left - it.qty);
+    stock.qty_left = newQty;
+    await sb.from('item_stock').update({ qty_left: newQty, updated_at: new Date().toISOString() }).eq('id', stock.id);
+    if(newQty <= 0) shortages.push(`${it.name} (OUT for today)`);
+    else if(newQty <= stock.threshold) shortages.push(`${it.name} (${newQty} left)`);
+  }
+  if(shortages.length) showToast('Heads up: ' + [...new Set(shortages)].join(', '));
+  renderMenu();
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-PH', {year:'numeric', month:'short', day:'numeric'});
+  const timeStr = now.toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
+  let rows = items.map(it => `<div class="r-row"><span>${it.name} x${it.qty}</span><span>${fmt(it.price*it.qty)}</span></div>`).join('');
+  document.getElementById('receiptContent').innerHTML = `
+    <h3>Tapsihan ni Inan</h3>
+    <div class="sub">B4 L2 Brgy. St. Peter 1, Dasma City, Cavite<br>0964-107-1558</div>
+    <hr>
+    <div class="r-row"><span>Order #${orderNum}</span><span>${dateStr}</span></div>
+    <div class="r-row"><span>Cashier: ${currentUser.name}</span><span>${timeStr}</span></div>
+    <hr>${rows}
+    ${delivery > 0 ? `<div class="r-row"><span>Delivery charge</span><span>${fmt(delivery)}</span></div>` : ''}
+    <hr>
+    <div class="r-row r-total"><span>TOTAL</span><span>${fmt(total)}</span></div>
+    <div class="r-row"><span>Payment</span><span>${paymentMethod}</span></div>
+    <div class="r-row"><span>${paymentMethod === 'Cash' ? 'Cash' : 'Amount received'}</span><span>${fmt(cash)}</span></div>
+    <div class="r-row"><span>Change</span><span>${fmt(Math.max(change,0))}</span></div>
+    <div class="thanks">Salamat po sa pagbili! 🍚</div>
+    <div class="modal-btns"><button class="btn-print" id="printBtn">Print</button><button class="btn-newsale" id="newSaleBtn">New Sale</button></div>
+  `;
+  document.getElementById('receiptOverlay').classList.add('show');
+  document.getElementById('printBtn').addEventListener('click', () => window.print());
+  document.getElementById('newSaleBtn').addEventListener('click', () => {
+    resetCartUI();
+    document.getElementById('receiptOverlay').classList.remove('show');
+  }, { once:true });
+});
+
+/* ============================================================
+   INVENTORY (owner)
+   ============================================================ */
+function renderInventory(){
+  const wrap = document.getElementById('inventoryTableWrap');
+  if(inventory.length === 0){ wrap.innerHTML = '<div class="empty-state">No stock items yet.</div>'; return; }
+  let rowsHTML = inventory.map(it => {
+    const low = it.qty <= it.reorder_level;
+    return `
+      <tr class="${low?'low-stock':''}">
+        <td><strong>${it.name}</strong></td>
+        <td>${it.unit}</td>
+        <td><div class="inv-qty-ctrl"><button data-id="${it.id}" data-d="-1" class="inv-minus">−</button><span>${it.qty}</span><button data-id="${it.id}" data-d="1" class="inv-plus">+</button></div></td>
+        <td>${it.reorder_level}</td>
+        <td><input type="number" class="inv-cost-input" data-id="${it.id}" value="${it.cost_per_unit}" min="0" step="0.01" style="width:80px; padding:5px 7px; border-radius:6px; border:1.5px solid var(--line); font-weight:700;"></td>
+        <td><span class="stock-badge ${low?'low':'ok'}">${low?'Low stock':'OK'}</span></td>
+        <td><button class="icon-btn inv-remove" data-id="${it.id}">🗑</button></td>
+      </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table><thead><tr><th>Item</th><th>Unit</th><th>Qty on hand</th><th>Reorder level</th><th>Cost/unit (₱)</th><th>Status</th><th></th></tr></thead><tbody>${rowsHTML}</tbody></table>`;
+
+  wrap.querySelectorAll('.inv-minus,.inv-plus').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const it = inventory.find(x => x.id == btn.dataset.id);
+      const newQty = Math.max(0, +(it.qty + (+btn.dataset.d)).toFixed(2));
+      it.qty = newQty;
+      renderInventory();
+      await sb.from('inventory').update({ qty: newQty }).eq('id', it.id);
+    });
+  });
+  wrap.querySelectorAll('.inv-cost-input').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const it = inventory.find(x => x.id == inp.dataset.id);
+      it.cost_per_unit = parseFloat(inp.value) || 0;
+      await sb.from('inventory').update({ cost_per_unit: it.cost_per_unit }).eq('id', it.id);
+      renderFoodCost();
+    });
+  });
+  wrap.querySelectorAll('.inv-remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('inventory').delete().eq('id', btn.dataset.id);
+      inventory = inventory.filter(x => x.id != btn.dataset.id);
+      renderInventory();
+      showToast('Item removed');
+    });
+  });
+}
+document.getElementById('toggleAddInv').addEventListener('click', () => document.getElementById('addInvForm').classList.toggle('show'));
+document.getElementById('cancelInvBtn').addEventListener('click', () => document.getElementById('addInvForm').classList.remove('show'));
+document.getElementById('saveInvBtn').addEventListener('click', async () => {
+  const name = document.getElementById('invName').value.trim();
+  const unit = document.getElementById('invUnit').value.trim() || 'pcs';
+  const qty = parseFloat(document.getElementById('invQty').value) || 0;
+  const reorder_level = parseFloat(document.getElementById('invReorder').value) || 0;
+  const cost_per_unit = parseFloat(document.getElementById('invCost').value) || 0;
+  if(!name){ showToast('Please enter an item name'); return; }
+  const { data, error } = await sb.from('inventory').insert({ name, unit, qty, reorder_level, cost_per_unit }).select().single();
+  if(error){ showToast('Could not save — try again'); return; }
+  inventory.push(data);
+  ['invName','invUnit','invQty','invReorder','invCost'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('addInvForm').classList.remove('show');
+  renderInventory();
+  showToast('Stock item added');
+});
+
+/* ============================================================
+   ITEM STOCK (owner)
+   ============================================================ */
+function renderItemStock(){
+  const wrap = document.getElementById('itemStockTableWrap');
+  let rowsHTML = menuItems.map(item => {
+    const stock = itemStock[item.id];
+    if(!stock){
+      return `<tr><td><strong>${item.name}</strong></td><td colspan="3" style="color:var(--ink-soft);">Not tracked — unlimited</td><td><button class="btn-sm btn-outline track-item-btn" data-id="${item.id}">+ Track this item</button></td></tr>`;
+    }
+    const low = stock.qty_left <= 0 ? 'out' : (stock.qty_left <= stock.threshold ? 'low' : 'ok');
+    const badgeText = low === 'out' ? 'OUT OF STOCK' : (low === 'low' ? 'Low stock' : 'OK');
+    return `
+      <tr class="${low!=='ok'?'low-stock':''}">
+        <td><strong>${item.name}</strong></td>
+        <td><div class="inv-qty-ctrl"><button data-id="${item.id}" data-d="-1" class="stock-minus">−</button><span>${stock.qty_left}</span><button data-id="${item.id}" data-d="1" class="stock-plus">+</button></div></td>
+        <td><input type="number" class="par-input" data-id="${item.id}" value="${stock.par}" min="0" step="1" style="width:64px; padding:5px 7px; border-radius:6px; border:1.5px solid var(--line); font-weight:700;"></td>
+        <td><input type="number" class="threshold-input" data-id="${item.id}" value="${stock.threshold}" min="0" step="1" style="width:64px; padding:5px 7px; border-radius:6px; border:1.5px solid var(--line); font-weight:700;"></td>
+        <td><span class="stock-badge ${low==='ok'?'ok':'low'}">${badgeText}</span> <button class="icon-btn untrack-item-btn" data-id="${item.id}">✕</button></td>
+      </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table><thead><tr><th>Dish</th><th>Left today</th><th>Par</th><th>Warn at</th><th>Status</th></tr></thead><tbody>${rowsHTML}</tbody></table>`;
+
+  wrap.querySelectorAll('.track-item-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const { data, error } = await sb.from('item_stock').insert({ menu_item_id: btn.dataset.id, qty_left:20, par:20, threshold:5 }).select().single();
+      if(!error){ itemStock[btn.dataset.id] = data; renderItemStock(); renderMenu(); }
+    });
+  });
+  wrap.querySelectorAll('.untrack-item-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const stock = itemStock[btn.dataset.id];
+      await sb.from('item_stock').delete().eq('id', stock.id);
+      delete itemStock[btn.dataset.id];
+      renderItemStock(); renderMenu();
+    });
+  });
+  wrap.querySelectorAll('.stock-minus,.stock-plus').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const stock = itemStock[btn.dataset.id];
+      const newQty = Math.max(0, stock.qty_left + (+btn.dataset.d));
+      stock.qty_left = newQty;
+      renderItemStock(); renderMenu();
+      await sb.from('item_stock').update({ qty_left: newQty, updated_at: new Date().toISOString() }).eq('id', stock.id);
+    });
+  });
+  wrap.querySelectorAll('.par-input').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const stock = itemStock[inp.dataset.id];
+      stock.par = parseFloat(inp.value) || 0;
+      await sb.from('item_stock').update({ par: stock.par }).eq('id', stock.id);
+    });
+  });
+  wrap.querySelectorAll('.threshold-input').forEach(inp => {
+    inp.addEventListener('change', async () => {
+      const stock = itemStock[inp.dataset.id];
+      stock.threshold = parseFloat(inp.value) || 0;
+      await sb.from('item_stock').update({ threshold: stock.threshold }).eq('id', stock.id);
+      renderItemStock(); renderMenu();
+    });
+  });
+}
+document.getElementById('restockParBtn').addEventListener('click', async () => {
+  for(const id in itemStock){
+    itemStock[id].qty_left = itemStock[id].par;
+    await sb.from('item_stock').update({ qty_left: itemStock[id].par, updated_at: new Date().toISOString() }).eq('id', itemStock[id].id);
+  }
+  renderItemStock(); renderMenu();
+  showToast('All tracked items restocked to par');
+});
+
+/* ============================================================
+   FOOD COST (owner)
+   ============================================================ */
+function dishCost(menuItemId){
+  const lines = recipeLines[menuItemId];
+  if(!lines || lines.length === 0) return null;
+  return lines.reduce((sum, line) => {
+    const invItem = inventory.find(x => x.id === line.inventory_id);
+    return sum + (invItem ? invItem.cost_per_unit : 0) * line.qty_per_serving;
+  }, 0);
+}
+function renderFoodCost(){
+  const wrap = document.getElementById('foodcostTableWrap');
+  let rowsHTML = menuItems.map(d => {
+    const cost = dishCost(d.id);
+    const hasRecipe = cost !== null;
+    const margin = hasRecipe ? d.price - cost : null;
+    const marginPct = hasRecipe && d.price > 0 ? (margin/d.price*100) : null;
+    return `<tr>
+      <td><strong>${d.name}</strong><br><span style="color:var(--ink-soft); font-size:11.5px;">${d.category}</span></td>
+      <td>${fmt(d.price)}</td>
+      <td>${hasRecipe ? fmt(cost) : '<span style="color:var(--ink-soft);">No recipe set</span>'}</td>
+      <td>${hasRecipe ? fmt(margin) : '–'}</td>
+      <td>${hasRecipe ? marginPct.toFixed(0)+'%' : '–'}</td>
+      <td>
+        <button class="btn-sm btn-outline edit-recipe-btn" data-id="${d.id}">${hasRecipe?'Edit':'+ Add'} recipe</button>
+        <button class="icon-btn retire-item-btn" data-id="${d.id}" data-name="${d.name}" title="Remove from menu">🗑</button>
+      </td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table><thead><tr><th>Dish</th><th>Price</th><th>Cost/serving</th><th>Margin ₱</th><th>Margin %</th><th></th></tr></thead><tbody>${rowsHTML}</tbody></table>`;
+  wrap.querySelectorAll('.edit-recipe-btn').forEach(btn => btn.addEventListener('click', () => openRecipeEditor(btn.dataset.id)));
+  wrap.querySelectorAll('.retire-item-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(!confirm(`Remove "${btn.dataset.name}" from the menu? Cashiers won't see it anymore, but past sales stay in your records. You can re-add it anytime.`)) return;
+      const { error } = await sb.from('menu_items').update({ active: false }).eq('id', btn.dataset.id);
+      if(error){ showToast('Could not remove — try again'); return; }
+      menuItems = menuItems.filter(m => m.id != btn.dataset.id);
+      renderFoodCost(); renderMenu(); renderItemStock();
+      showToast(`${btn.dataset.name} removed from menu`);
+    });
+  });
+}
+
+/* ============ ADD MENU ITEM (owner) ============ */
+function populateCategorySelect(){
+  const sel = document.getElementById('miCategorySelect');
+  const categories = [...new Set(menuItems.map(m => m.category))];
+  sel.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('') + `<option value="__new__">+ New category...</option>`;
+}
+document.getElementById('toggleAddMenuItem').addEventListener('click', () => {
+  populateCategorySelect();
+  document.getElementById('addMenuItemForm').classList.toggle('show');
+});
+document.getElementById('cancelMenuItemBtn').addEventListener('click', () => {
+  document.getElementById('addMenuItemForm').classList.remove('show');
+});
+document.getElementById('miCategorySelect').addEventListener('change', (e) => {
+  document.getElementById('miNewCategoryWrap').style.display = e.target.value === '__new__' ? 'flex' : 'none';
+});
+document.getElementById('saveMenuItemBtn').addEventListener('click', async () => {
+  const name = document.getElementById('miName').value.trim();
+  const price = parseFloat(document.getElementById('miPrice').value);
+  let category = document.getElementById('miCategorySelect').value;
+  if(category === '__new__'){
+    category = document.getElementById('miNewCategory').value.trim();
+  }
+  if(!name || !category || !price || price <= 0){
+    showToast('Fill in dish name, category, and a price greater than 0');
+    return;
+  }
+  const { data, error } = await sb.from('menu_items').insert({ name, category, price, active: true }).select().single();
+  if(error){ showToast('Could not save — try again'); return; }
+  menuItems.push(data);
+  ['miName','miPrice','miNewCategory'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('miNewCategoryWrap').style.display = 'none';
+  document.getElementById('addMenuItemForm').classList.remove('show');
+  renderMenu(); renderFoodCost(); renderItemStock();
+  showToast(`${name} added to the menu`);
+});
+function openRecipeEditor(menuItemId){
+  editingDish = menuItemId;
+  const item = menuItems.find(m => m.id == menuItemId);
+  document.getElementById('recipeEditorTitle').textContent = 'Recipe for ' + item.name;
+  document.getElementById('recipeEditor').style.display = 'flex';
+  document.getElementById('recipeIngredientSelect').innerHTML = inventory.map(it => `<option value="${it.id}">${it.name} (${it.unit})</option>`).join('');
+  renderRecipeLines();
+}
+function renderRecipeLines(){
+  const container = document.getElementById('recipeLines');
+  const lines = recipeLines[editingDish] || [];
+  if(lines.length === 0){ container.innerHTML = '<div style="color:var(--ink-soft); font-size:13px;">No ingredients yet.</div>'; return; }
+  container.innerHTML = lines.map(line => {
+    const invItem = inventory.find(x => x.id === line.inventory_id);
+    const unit = invItem ? invItem.unit : '';
+    const lineCost = invItem ? invItem.cost_per_unit * line.qty_per_serving : 0;
+    return `<div style="display:flex; align-items:center; gap:10px; font-size:13.5px; background:var(--cream); padding:7px 10px; border-radius:8px;">
+      <span style="flex:1;"><strong>${invItem?invItem.name:'?'}</strong> — ${line.qty_per_serving} ${unit}</span>
+      <span style="color:var(--ink-soft);">${fmt(lineCost)}</span>
+      <button class="icon-btn remove-recipe-line" data-id="${line.id}">🗑</button>
+    </div>`;
+  }).join('');
+  container.querySelectorAll('.remove-recipe-line').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await sb.from('recipe_lines').delete().eq('id', btn.dataset.id);
+      recipeLines[editingDish] = recipeLines[editingDish].filter(l => l.id != btn.dataset.id);
+      renderRecipeLines(); renderFoodCost();
+    });
+  });
+}
+document.getElementById('addRecipeLineBtn').addEventListener('click', async () => {
+  const inventory_id = document.getElementById('recipeIngredientSelect').value;
+  const qty = parseFloat(document.getElementById('recipeQtyInput').value);
+  if(!inventory_id || !qty || qty <= 0){ showToast('Enter a quantity greater than 0'); return; }
+  const existing = (recipeLines[editingDish]||[]).find(l => l.inventory_id == inventory_id);
+  if(existing){
+    existing.qty_per_serving = qty;
+    await sb.from('recipe_lines').update({ qty_per_serving: qty }).eq('id', existing.id);
+  } else {
+    const { data, error } = await sb.from('recipe_lines').insert({ menu_item_id: editingDish, inventory_id, qty_per_serving: qty }).select().single();
+    if(!error){
+      if(!recipeLines[editingDish]) recipeLines[editingDish] = [];
+      recipeLines[editingDish].push(data);
+    }
+  }
+  document.getElementById('recipeQtyInput').value = '';
+  renderRecipeLines(); renderFoodCost();
+});
+document.getElementById('closeRecipeEditor').addEventListener('click', () => {
+  document.getElementById('recipeEditor').style.display = 'none';
+  editingDish = null;
+});
+
+/* ============================================================
+   SALES LOG (owner)
+   ============================================================ */
+function renderSales(){
+  const wrap = document.getElementById('salesTableWrap');
+  if(salesLog.length === 0){ wrap.innerHTML = '<div class="empty-state">No sales recorded yet.</div>'; return; }
+  const totalRevenue = salesLog.reduce((s,r) => s + Number(r.total), 0);
+  let rowsHTML = salesLog.map(r => {
+    const itemsText = (r.items||[]).map(it => `${it.name} x${it.qty}`).join(', ');
+    const d = new Date(r.sold_at);
+    return `<tr>
+      <td>#${r.order_num}</td>
+      <td>${d.toLocaleDateString('en-PH',{year:'numeric',month:'short',day:'numeric'})}</td>
+      <td>${d.toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})}</td>
+      <td>${itemsText}</td>
+      <td>${r.delivery_charge ? fmt(r.delivery_charge) : '–'}</td>
+      <td>${fmt(r.total)}</td>
+      <td>${r.payment_method}</td>
+      <td>${r.cashier_name || '–'}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `
+    <div style="margin-bottom:12px;font-weight:800;color:var(--red-dark);">${salesLog.length} sale${salesLog.length>1?'s':''} · Total revenue: ${fmt(totalRevenue)}</div>
+    <table><thead><tr><th>Order #</th><th>Date</th><th>Time</th><th>Items</th><th>Delivery</th><th>Total</th><th>Payment</th><th>Cashier</th></tr></thead><tbody>${rowsHTML}</tbody></table>
+  `;
+}
+
+/* ============================================================
+   STAFF (owner)
+   ============================================================ */
+function renderStaff(){
+  const wrap = document.getElementById('staffTableWrap');
+  let rowsHTML = staffList.map(s => `
+    <tr>
+      <td><strong>${s.name}</strong></td>
+      <td>${s.pin}</td>
+      <td><span class="stock-badge ${s.role==='owner'?'ok':'low'}">${s.role}</span></td>
+      <td><button class="icon-btn staff-remove" data-id="${s.id}">🗑</button></td>
+    </tr>`).join('');
+  wrap.innerHTML = `<table><thead><tr><th>Name</th><th>PIN</th><th>Role</th><th></th></tr></thead><tbody>${rowsHTML}</tbody></table>`;
+  wrap.querySelectorAll('.staff-remove').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const target = staffList.find(s => s.id == btn.dataset.id);
+      const ownerCount = staffList.filter(s => s.role === 'owner').length;
+      if(target.role === 'owner' && ownerCount <= 1){
+        showToast('Cannot remove the last owner account — add another owner first');
+        return;
+      }
+      if(!confirm(`Remove ${target.name} (${target.role})? This cannot be undone.`)) return;
+      await sb.from('staff').delete().eq('id', btn.dataset.id);
+      staffList = staffList.filter(s => s.id != btn.dataset.id);
+      renderStaff();
+      showToast('Staff removed');
+    });
+  });
+}
+document.getElementById('toggleAddStaff').addEventListener('click', () => document.getElementById('addStaffForm').classList.toggle('show'));
+document.getElementById('cancelStaffBtn').addEventListener('click', () => document.getElementById('addStaffForm').classList.remove('show'));
+document.getElementById('saveStaffBtn').addEventListener('click', async () => {
+  const name = document.getElementById('staffName').value.trim();
+  const pin = document.getElementById('staffPin').value.trim();
+  const role = document.getElementById('staffRole').value;
+  if(!name || !/^\d{4}$/.test(pin)){ showToast('Enter a name and a 4-digit PIN'); return; }
+  const { data, error } = await sb.from('staff').insert({ name, pin, role }).select().single();
+  if(error){ showToast('That PIN might already be in use — try another'); return; }
+  staffList.push(data);
+  document.getElementById('staffName').value = '';
+  document.getElementById('staffPin').value = '';
+  document.getElementById('addStaffForm').classList.remove('show');
+  renderStaff();
+  showToast('Staff added');
+});
+
+/* ============================================================
+   EXCEL EXPORT (optional copy, owner only — live data is already in Supabase)
+   ============================================================ */
+document.getElementById('exportExcelBtn').addEventListener('click', () => {
+  if(typeof XLSX === 'undefined'){ showToast('Excel library did not load'); return; }
+  const wb = XLSX.utils.book_new();
+  const salesData = salesLog.map(r => ({
+    "Order #": r.order_num, "Date/Time": new Date(r.sold_at).toLocaleString('en-PH'),
+    "Items": (r.items||[]).map(it=>`${it.name} x${it.qty}`).join(', '),
+    "Subtotal (₱)": r.subtotal, "Delivery (₱)": r.delivery_charge, "Total (₱)": r.total,
+    "Payment": r.payment_method, "Cashier": r.cashier_name
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesData.length?salesData:[{"Order #":"No sales yet"}]), "Sales Log");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(inventory.map(it=>({"Item":it.name,"Unit":it.unit,"Qty":it.qty,"Reorder":it.reorder_level,"Cost/unit":it.cost_per_unit}))), "Inventory");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(menuItems.map(d=>{
+    const stock = itemStock[d.id];
+    return {"Dish":d.name,"Tracked":stock?"Yes":"No","Left today":stock?stock.qty_left:"","Par":stock?stock.par:""};
+  })), "Item Stock");
+  const today = new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb, `TapsihanNiInan_${today}.xlsx`);
+  showToast('Excel copy downloaded');
+});
+
+/* ============================================================
+   CLOCK
+   ============================================================ */
+function updateClock(){
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit'});
+}
+updateClock();
+setInterval(updateClock, 30000);
+</script>
+</body>
+</html>
